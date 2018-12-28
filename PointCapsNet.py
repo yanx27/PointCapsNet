@@ -26,7 +26,7 @@ class Conv3d_1(torch.nn.Module):
 
 # Primary Capsules
 class PrimaryCapsules(torch.nn.Module):
-    def __init__(self, input_shape=(256, 18, 18, 18), capsule_dim=8,
+    def __init__(self, input_shape=(256, 16, 16, 16), capsule_dim=8,
                  out_channels=32, kernel_size=9, stride=2):
         super(PrimaryCapsules, self).__init__()
         self.input_shape = input_shape
@@ -187,22 +187,28 @@ if __name__ == '__main__':
     import os
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'
     input = torch.randn((128,1,24,24,24)).cuda()
-    out = Conv3d_1(1).cuda()(input)
+    print('input', input.shape)
+    out = Conv3d_1(input.shape[1], 256, 5).cuda()(input)
     print('After cov1', out.shape)
-    out = PrimaryCapsules().cuda()(out)
+    out = PrimaryCapsules(
+            input_shape=(256, 16, 16, 16),
+            capsule_dim=8,
+            out_channels=32,
+            kernel_size=9,
+            stride=2).cuda()(out)
     print('After PrimaryCapsules', out.shape)
     out = Routing().cuda()(out,2)
     print('After Routing', out.shape)
     score = Norm()(out)
     print('After Norm', score.shape)
-    decoder = Decoder(16, int(np.prod((1, 16, 16, 16))), (1, 16, 16, 16)).cuda()
+    decoder = Decoder(16, int(np.prod((1, 24, 24, 24))), (1, 24, 24, 24)).cuda()
     y = torch.IntTensor(np.array([np.random.randint(0, 10) for i in range(128)]))
-    reconstruction = decoder(out, y).view((-1,) + (1, 16, 16, 16))
+    reconstruction = decoder(out, y).view((-1,) + (1, 24, 24, 24))
     print('After reconstruction', reconstruction.shape)
-    model = PointCapsNet((1,16,16,16), 3).cuda()
-    y_pred, x_reconstruction = model(input, y)
-    print('x shape',input.shape)
-    print('y shape',y.shape)
-    print(y_pred.shape)
-    print(x_reconstruction.shape)
+    # model = PointCapsNet((1,24,24,24), 3).cuda()
+    # y_pred, x_reconstruction = model(input, y)
+    # print('x shape',input.shape)
+    # print('y shape',y.shape)
+    # print(y_pred.shape)
+    # print(x_reconstruction.shape)
 
