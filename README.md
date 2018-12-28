@@ -15,7 +15,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 
 ## 测试
 * 无旋转测试
-`python evaluation.py <br>
+`python evaluation.py` <br>
 * 若要旋转测试
 `python evaluation.py --rotation xx,yy` <br>
 xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练数据随机旋转1~60度
