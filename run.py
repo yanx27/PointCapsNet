@@ -43,6 +43,8 @@ def parse_args():
                         help='total number of class in classification')
     parser.add_argument('--decay_rate', type=str, default=0.9,
                         help='decay rate of learning rate')
+    parser.add_argument('--rotation',  default=None,
+                        help='range of training rotation')
     return parser.parse_args()
 
 def main(args):
@@ -58,11 +60,12 @@ def main(args):
     DATA_PATH = args.data_path
     NUM_CLASS = int(args.num_class)
     DECAY_RATE = float(args.decay_rate)
+    ROTATION = (int(args.rotation[0:2]),int(args.rotation[3:5]))
 
 
     '''CREATE DIR'''
-    checkpoints_dir = Path('./experiment/')
-    checkpoints_dir.mkdir(exist_ok=True)
+    experiment_dir = Path('./experiment/')
+    experiment_dir.mkdir(exist_ok=True)
     result_dir = Path(args.result_dir)
     result_dir.mkdir(exist_ok=True)
     checkpoints_dir = Path('./experiment/checkpoints/')
@@ -75,11 +78,11 @@ def main(args):
     logger = logging.getLogger("PointCapsNet")
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler = logging.FileHandler(args.log_dir+ str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M'))+'.txt')
+    file_handler = logging.FileHandler(args.log_dir + 'train-'+ str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M'))+'.txt')
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    logger.info('---------------------------------------------------EXPERIMENT---------------------------------------------------')
+    logger.info('---------------------------------------------------TRANING---------------------------------------------------')
     logger.info('PARAMETER ...')
     logger.info(args)
 
@@ -88,8 +91,10 @@ def main(args):
     train_data, train_label, test_data, test_label = load_data(DATA_PATH)
     logger.info("The number of training data is: %d",train_data.shape[0])
     logger.info("The number of test data is: %d", test_data.shape[0])
-    trainDataset = myDataset(train_data, train_label,meshmode = "density", rotation=(1,30))
-    testDataset = myDataset(test_data, test_label, meshmode = "density") # ,  rotation=(31,60)
+    trainDataset = myDataset(train_data, train_label,meshmode = "density",rotation=ROTATION)
+    if ROTATION is not None:
+        print('The range of training rotation is',ROTATION)
+    testDataset = myDataset(test_data, test_label, meshmode = "density")
     trainDataLoader = torch.utils.data.DataLoader(trainDataset, batch_size=BATCHSIZE, shuffle=True)
     testDataLoader = torch.utils.data.DataLoader(testDataset, batch_size=BATCHSIZE, shuffle=False)
 
@@ -99,9 +104,11 @@ def main(args):
         print('Use pretrain model...')
         logger.info('Use pretrain model')
         checkpoint = torch.load(args.pretrain)
+        start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['model_state_dict'])
     else:
         print('No existing model, starting training from scratch...')
+        start_epoch = 0
 
     print(model)
     print('Number of Parameters: %d' % model.n_parameters())
@@ -123,7 +130,7 @@ def main(args):
     logger.info('Start training...')
     total_train_acc = []
     total_test_acc = []
-    for epoch in range(int(EPOCH)):
+    for epoch in range(start_epoch, EPOCH):
         print('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, EPOCH))
         logger.info('Epoch %d (%d/%s):' ,global_epoch + 1, epoch + 1, EPOCH)
 
