@@ -42,7 +42,10 @@ def main(args):
     ROUNTING_ITER = args.n_routing_iter
     DATA_PATH = args.data_path
     NUM_CLASS = int(args.num_class)
-    ROTATION = (int(args.rotation[0:2]),int(args.rotation[3:5]))
+    if args.rotation is not None:
+        ROTATION = (int(args.rotation[0:2]),int(args.rotation[3:5]))
+    else:
+        ROTATION = None
 
 
     '''CREATE DIR'''
@@ -88,7 +91,7 @@ def main(args):
     try :
         checkpoint = torch.load(str(checkpoints_dir)+'/'+best_checkpoints)
         print('The original test accuracy is: %f'% checkpoint['test_accuracy'])
-        logger.info('The original test accuracy is:',checkpoint['test_accuracy'])
+        logger.info('The original test accuracy is: %d',checkpoint['test_accuracy'])
     except:
         OSError('cannot find checkpoints file!!')
 
