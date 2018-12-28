@@ -18,7 +18,6 @@ class MarginLoss(torch.nn.Module):
         self.m_neg = m_neg
         self.lamb = lamb
 
-    # Equation (4)
     def forward(self, scores, y, num_class):
         y = Variable(to_categorical(y, num_class))
 
