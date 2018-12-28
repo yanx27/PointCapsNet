@@ -20,7 +20,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
    ` 
    
     parser.add_argument('--mesh_size', default=24,
-                        help='size when transfer pointcloud to mesh')       
+                        help='点云转换成体素时候的尺寸，默认24x24x24')       
                         
     parser.add_argument('--batchsize', default=32,
                         help='batch size in training')
@@ -35,10 +35,10 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
                         help='specify gpu device')
                         
     parser.add_argument('--train_metric', type=str, default=False,
-                        help='whether evaluate on training dataset')
+                        help='在训练的时候是否测试训练集上的正确率')
                         
     parser.add_argument('--pretrain', type=str, default=None,
-                        help='whether use pretrain model')
+                        help='是否接着预训练的模型接着训练')
     parser.add_argument('--result_dir', type=str, default='./experiment/results/',
                         help='dir to save pictures')
                         
@@ -52,10 +52,10 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
                         help='decay rate of learning rate')
                         
     parser.add_argument('--num_class', type=str, default=40,
-                        help='total number of class in classification')
+                        help='分类的总数（防止类别过多无法训练）')
                         
     parser.add_argument('--decay_rate', type=str, default=0.9,
                         help='decay rate of learning rate')
                         
     parser.add_argument('--rotation',  default=None,
-                        help='range of training rotation')`
+                        help='训练时旋转数据增强的角度范围')`
