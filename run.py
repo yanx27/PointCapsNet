@@ -18,7 +18,7 @@ def parse_args():
     '''PARAMETERS'''
     parser = argparse.ArgumentParser('CapsNet')
     parser.add_argument('--mesh_size', default=24,
-                        help='size when transfer pointcloud to mesh')
+                        help='size of mesh when transfer from pointcloud')
     parser.add_argument('--batchsize', default=32,
                         help='batch size in training')
     parser.add_argument('--epoch',  default=5,
@@ -60,8 +60,10 @@ def main(args):
     DATA_PATH = args.data_path
     NUM_CLASS = int(args.num_class)
     DECAY_RATE = float(args.decay_rate)
-    ROTATION = (int(args.rotation[0:2]),int(args.rotation[3:5]))
-
+    if args.rotation is not None:
+        ROTATION = (int(args.rotation[0:2]),int(args.rotation[3:5]))
+    else:
+        ROTATION = None
 
     '''CREATE DIR'''
     experiment_dir = Path('./experiment/')
