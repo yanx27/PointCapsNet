@@ -175,7 +175,7 @@ def main(args):
         # idx = np.random.randint(0, len(x))
         # show_example(x[idx], y[idx], x_reconstruction[idx], y_pred[idx], args.result_dir, 'Epoch_{}'.format(epoch))
 
-        if (test_metrics['accuracy'] >= best_tst_accuracy) and epoch > 5 == 0:
+        if (test_metrics['accuracy'] >= best_tst_accuracy) and epoch > 5:
             best_tst_accuracy = test_metrics['accuracy']
             logger.info('Save model...')
             save_checkpoint(
