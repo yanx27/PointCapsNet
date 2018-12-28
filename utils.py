@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from tqdm import tqdm
 from collections import defaultdict
+import datetime
+
 
 def show_example(x, y, x_reconstruction, y_pred,save_dir, figname):
     x = x.squeeze().cpu().data.numpy()
@@ -67,7 +69,7 @@ def plot_loss_curve(history,n_points_avg,n_points_plot,save_dir):
     plt.plot(avg_curve, '-r')
 
     plt.legend(['Total Loss', 'Margin Loss', 'Reconstruction Loss'])
-    plt.savefig(save_dir+ '/total_result.png')
+    plt.savefig(save_dir + '/'+ str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M')) + '_total_result.png')
     plt.close()
 
 def plot_acc_curve(total_train_acc,total_test_acc,save_dir):
@@ -77,7 +79,7 @@ def plot_acc_curve(total_train_acc,total_test_acc,save_dir):
     plt.ylabel('acc')
     plt.xlabel('epoch')
     plt.title('Accuracy of training and test')
-    plt.savefig(save_dir + '/total_acc.png')
+    plt.savefig(save_dir +'/'+ str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M'))+'_total_acc.png')
     plt.close()
 
 def show_point_cloud(tuple,seg_label=[]):
