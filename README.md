@@ -3,10 +3,10 @@
 ## 训练
 * 无数据增强训练
 `python run.py --epoch 50` <br>
-* 若要在训练中加入旋转数据增强
+* 在训练中加入旋转数据增强
 `python run.py --epoch 50 --rotation xx,yy` <br>
 xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练数据随机旋转1~60度<br>
-* 若要接着上次的训练
+* 接着上次的训练
 `python run.py --epoch 50 --pretrain ./experiment/checkpoints/xx.pth `<br>
 * 训练数据放在`./data/modelnet40_ply_hdf5_2048`
 * 实验模型保存在`./experiment/checkpoints/`
@@ -14,9 +14,10 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 * 实验结果图保存在`./experiment/results/`
 
 ## 测试
+* 会自动选取`./experiment/checkpoints/`中正确率最高的模型进行测试
 * 无旋转测试
 `python evaluation.py` <br>
-* 若要旋转测试
+* 旋转测试
 `python evaluation.py --rotation xx,yy` <br>
 xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练数据随机旋转1~60度
 
