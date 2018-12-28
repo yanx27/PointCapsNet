@@ -205,10 +205,14 @@ if __name__ == '__main__':
     y = torch.IntTensor(np.array([np.random.randint(0, 10) for i in range(128)]))
     reconstruction = decoder(out, y).view((-1,) + (1, 24, 24, 24))
     print('After reconstruction', reconstruction.shape)
-    # model = PointCapsNet((1,24,24,24), 3).cuda()
-    # y_pred, x_reconstruction = model(input, y)
-    # print('x shape',input.shape)
-    # print('y shape',y.shape)
-    # print(y_pred.shape)
-    # print(x_reconstruction.shape)
+    model = PointCapsNet((1,24,24,24), 3).cuda()
+    y_pred, x_reconstruction = model(input, y)
+    print('x shape',input.shape)
+    print('y shape',y.shape)
+    print(y_pred.shape)
+    print(x_reconstruction.shape)
+    # Draw network structure
+    from torchviz import make_dot
+    draw = make_dot((y_pred, x_reconstruction), params=dict(model.named_parameters()))
+    draw.view()
 

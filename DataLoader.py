@@ -91,17 +91,6 @@ if __name__ == '__main__':
     h5_filename = os.path.join(data_path, 'ply_data_train0.h5')
     data, label = load_h5(h5_filename)
     print(len(np.unique(label)))
-    # h5_filename = os.path.join(DATA_PATH, 'ply_data_train0.h5')
-    # data, label = load_h5(h5_filename)
-    # index10 = label <= NUM_CLASS-1
-    # data = data[list(index10[:, 0]), :, :]
-    # label = label[index10].reshape(-1, 1)
-    # train_x = data[:int(len(data)*0.6), :, :]
-    # train_y = label[:int(len(data)*0.6), ]
-    # test_x = data[int(len(data)*0.6):, :, :]
-    # test_y = label[int(len(data)*0.6):, ]
-    # print('TRAINING DATA SHAPE:', train_x.shape)
-    # print('TEST DATA SHAPE:', test_x.shape)
     myDataset = myDataset(data,label)
     myDataLoader = torch.utils.data.DataLoader(myDataset, batch_size=10, shuffle=False)
     for idx, (data, label) in enumerate(myDataLoader):
