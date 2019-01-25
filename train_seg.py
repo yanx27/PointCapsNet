@@ -100,7 +100,7 @@ def main(args):
             print('Epoch %d  %s loss: %f accuracy: %f' % (
                 epoch, blue('train'), history['loss'][-1], train_metrics))
             logger.info('Epoch %d  %s loss: %f accuracy: %f' % (
-                epoch, blue('train'), history['loss'][-1], train_metrics))
+                epoch, 'train', history['loss'][-1], train_metrics))
 
 
         test_metrics, test_hist_acc = test_seg(model, testdataloader)
@@ -108,7 +108,7 @@ def main(args):
         print('Epoch %d  %s accuracy: %f' % (
                  epoch, blue('test'), test_metrics))
         logger.info('Epoch %d  %s accuracy: %f' % (
-                 epoch, blue('test'), test_metrics))
+                 epoch, 'test', test_metrics))
         if test_metrics > best_acc:
             best_acc = test_metrics
             torch.save(model.state_dict(), '%s/seg_model_%d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
