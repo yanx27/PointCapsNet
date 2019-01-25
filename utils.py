@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from tqdm import tqdm
 from collections import defaultdict
 import datetime
-
+import torch.nn.functional as F
 
 def show_example(x, y, x_reconstruction, y_pred,save_dir, figname):
     x = x.squeeze().cpu().data.numpy()
@@ -46,7 +46,24 @@ def test(model, loader):
         metrics['accuracy'].append((acc).cpu().data.numpy())
     hist_acc.append(np.concatenate(metrics['accuracy']).mean())
     metrics['accuracy'] = np.concatenate(metrics['accuracy']).mean()
+    return metrics, hist_acc
 
+def test_seg(model, loader, num_classes = 50):
+    metrics = defaultdict(lambda:list())
+    hist_acc = []
+    for batch_id, (points, target) in tqdm(enumerate(loader), total=len(loader), smoothing=0.9):
+        batchsize, num_point, _ = points.size()
+        points, target = Variable(points), Variable(target.long())
+        points = points.transpose(2, 1)
+        points, target = points.cuda(), target.cuda()
+        pred, _ = model(points)
+        pred = pred.view(-1, num_classes)
+        target = target.view(-1, 1)[:, 0]
+        pred_choice = pred.data.max(1)[1]
+        correct = pred_choice.eq(target.data).cpu().sum()
+        metrics['accuracy'].append(correct.item()/ (batchsize * num_point))
+    hist_acc += metrics['accuracy']
+    metrics = np.mean(metrics['accuracy'])
 
     return metrics, hist_acc
 
