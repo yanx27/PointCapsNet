@@ -2,12 +2,12 @@
 
 ## 训练：
 * 无数据增强训练
-`python run.py --epoch 50` <br>
+`python train_clf.py --epoch 50` <br>
 * 在训练中加入旋转数据增强
-`python run.py --epoch 50 --rotation xx,yy` <br>
+`python train_clf.py --epoch 50 --rotation xx,yy` <br>
 xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练数据随机旋转1~60度<br>
 * 接着上次的训练
-`python run.py --epoch 50 --pretrain ./experiment/checkpoints/xx.pth `<br>
+`python train_clf.py --epoch 50 --pretrain ./experiment/checkpoints/xx.pth `<br>
 * 训练数据放在`./data/modelnet40_ply_hdf5_2048`
 * 实验模型保存在`./experiment/checkpoints/`
 * 实验记录保存在`./experiment/logs/`
