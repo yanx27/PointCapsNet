@@ -82,7 +82,7 @@ def plot_acc_curve(total_train_acc,total_test_acc,save_dir):
     plt.savefig(save_dir +'/'+ str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M'))+'_total_acc.png')
     plt.close()
 
-def show_point_cloud(tuple,seg_label=[]):
+def show_point_cloud(tuple,seg_label=[],title=None):
     import matplotlib.pyplot as plt
     if seg_label == []:
         x = [x[0] for x in tuple]
@@ -106,4 +106,5 @@ def show_point_cloud(tuple,seg_label=[]):
         ax.set_zlabel('Z')
         ax.set_ylabel('Y')
         ax.set_xlabel('X')
+    plt.title(title)
     plt.show()
