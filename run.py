@@ -17,13 +17,13 @@ import datetime
 def parse_args():
     '''PARAMETERS'''
     parser = argparse.ArgumentParser('CapsNet')
-    parser.add_argument('--mesh_size', default=24,
+    parser.add_argument('--mesh_size', default=24,type=int,
                         help='size of mesh when transfer from pointcloud')
-    parser.add_argument('--batchsize', default=32,
+    parser.add_argument('--batchsize', type=int, default=32,
                         help='batch size in training')
-    parser.add_argument('--epoch',  default=5,
+    parser.add_argument('--epoch',  default=5, type=int,
                         help='number of epoch in training')
-    parser.add_argument('--learning_rate', default=0.0001,
+    parser.add_argument('--learning_rate', default=0.0001, type=float,
                         help='learning rate in training')
     parser.add_argument('--gpu', type=str, default='0',
                         help='specify gpu device')
@@ -35,13 +35,13 @@ def parse_args():
                         help='dir to save pictures')
     parser.add_argument('--n_routing_iter', type=str, default=3,
                         help='Number of routing')
-    parser.add_argument('--data_path', type=str, default='./data/modelnet40_ply_hdf5_2048/',
+    parser.add_argument('--data_path', type=str, default='./data/shapenet16/',
                         help='data path')
     parser.add_argument('--log_dir', type=str, default='./experiment/logs/',
                         help='decay rate of learning rate')
-    parser.add_argument('--num_class', type=str, default=40,
+    parser.add_argument('--num_class', type=int, default=16,
                         help='total number of class in classification')
-    parser.add_argument('--decay_rate', type=str, default=0.9,
+    parser.add_argument('--decay_rate', type=float, default=0.9,
                         help='decay rate of learning rate')
     parser.add_argument('--rotation',  default=None,
                         help='range of training rotation')
@@ -50,16 +50,16 @@ def parse_args():
 def main(args):
     '''HYPER PARAMETER'''
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    MESH_SIZE = int(args.mesh_size)
-    BATCHSIZE = int(args.batchsize)
-    LEARNING_RATE = float(args.learning_rate)
+    MESH_SIZE = args.mesh_size
+    BATCHSIZE = args.batchsize
+    LEARNING_RATE = args.learning_rate
     INPUT_SIZE = (1, MESH_SIZE, MESH_SIZE, MESH_SIZE)
-    EPOCH = int(args.epoch)
+    EPOCH = args.epoch
     COMPUTE_TRAIN_METRICS = args.train_metric
     ROUNTING_ITER = args.n_routing_iter
     DATA_PATH = args.data_path
-    NUM_CLASS = int(args.num_class)
-    DECAY_RATE = float(args.decay_rate)
+    NUM_CLASS = args.num_class
+    DECAY_RATE = args.decay_rate
     if args.rotation is not None:
         ROTATION = (int(args.rotation[0:2]),int(args.rotation[3:5]))
     else:
@@ -96,7 +96,7 @@ def main(args):
     trainDataset = myDataset(train_data, train_label,meshmode = "density",rotation=ROTATION)
     if ROTATION is not None:
         print('The range of training rotation is',ROTATION)
-    testDataset = myDataset(test_data, test_label, meshmode = "density")
+    testDataset = myDataset(test_data, test_label, meshmode = "density",rotation=ROTATION)
     trainDataLoader = torch.utils.data.DataLoader(trainDataset, batch_size=BATCHSIZE, shuffle=True)
     testDataLoader = torch.utils.data.DataLoader(testDataset, batch_size=BATCHSIZE, shuffle=False)
 
