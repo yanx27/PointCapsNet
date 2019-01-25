@@ -123,15 +123,6 @@ def main(args):
         torch.save(classifier.state_dict(), '%s/seg_model_%d.pth' % (checkpoints_dir, epoch))
 
 
-
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
     args = parse_args()
     main(args)
