@@ -48,22 +48,39 @@ def test(model, loader):
     metrics['accuracy'] = np.concatenate(metrics['accuracy']).mean()
     return metrics, hist_acc
 
+def compute_iou(pred,target,dict=None): #TODO add category dictionary in future
+    ious = []
+    for j in range(pred.size(0)):
+        batch_pred = pred[j]
+        batch_target = target[j].cpu().data.numpy()
+        batch_choice = batch_pred.data.max(1)[1].cpu().data.numpy()
+        for cat in np.unique(batch_target):
+            intersection = len(batch_choice[(batch_choice==batch_target)&(batch_choice==cat)])
+            union = (len(batch_choice[batch_choice==cat])+len(batch_target[batch_target==cat])) - intersection
+            iou = intersection/union
+
+            ious.append(iou)
+    return np.mean(ious)
+
 def test_seg(model, loader, num_classes = 50):
     metrics = defaultdict(lambda:list())
     hist_acc = []
     for batch_id, (points, target) in tqdm(enumerate(loader), total=len(loader), smoothing=0.9):
         batchsize, num_point, _ = points.size()
-        points, target = Variable(points), Variable(target.long())
+        points, target = Variable(points.float()), Variable(target.long())
         points = points.transpose(2, 1)
         points, target = points.cuda(), target.cuda()
         pred, _ = model(points)
+        mean_iou = compute_iou(pred,target)
         pred = pred.view(-1, num_classes)
         target = target.view(-1, 1)[:, 0]
         pred_choice = pred.data.max(1)[1]
         correct = pred_choice.eq(target.data).cpu().sum()
         metrics['accuracy'].append(correct.item()/ (batchsize * num_point))
+        metrics['iou'].append(mean_iou)
     hist_acc += metrics['accuracy']
-    metrics = np.mean(metrics['accuracy'])
+    metrics['accuracy'] = np.mean(metrics['accuracy'])
+    metrics['iou'] = np.mean(metrics['iou'])
 
     return metrics, hist_acc
 
