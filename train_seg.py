@@ -16,6 +16,14 @@ from pathlib import Path
 from utils import test_seg
 from tqdm import tqdm
 
+
+seg_classes = {'Earphone': [16, 17, 18], 'Motorbike': [30, 31, 32, 33, 34, 35], 'Rocket': [41, 42, 43], 'Car': [8, 9, 10, 11], 'Laptop': [28, 29], 'Cap': [6, 7], 'Skateboard': [44, 45, 46], 'Mug': [36, 37], 'Guitar': [19, 20, 21], 'Bag': [4, 5], 'Lamp': [24, 25, 26, 27], 'Table': [47, 48, 49], 'Airplane': [0, 1, 2, 3], 'Pistol': [38, 39, 40], 'Chair': [12, 13, 14, 15], 'Knife': [22, 23]}
+seg_label_to_cat = {} # {0:Airplane, 1:Airplane, ...49:Table}
+for cat in seg_classes.keys():
+    for label in seg_classes[cat]:
+        seg_label_to_cat[label] = cat
+
+
 def parse_args():
     parser = argparse.ArgumentParser('PointCapsNetSeg')
     parser.add_argument('--batchSize', type=int, default=32, help='input batch size')
@@ -27,6 +35,7 @@ def parse_args():
     parser.add_argument('--pretrain', type=str, default=None,help='whether use pretrain model')
     parser.add_argument('--train_metric', type=str, default=False, help='Whether evaluate on training data')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
+    parser.add_argument('--rotation',  default=None,help='range of training rotation')
 
     return parser.parse_args()
 
@@ -58,8 +67,9 @@ def main(args):
     train_data, train_label, test_data, test_label = load_segdata(DATA_PATH)
     logger.info("The number of training data is: %d",train_data.shape[0])
     logger.info("The number of test data is: %d", test_data.shape[0])
+    ROTATION = (int(args.rotation[0:2]), int(args.rotation[3:5])) if args.rotation is not None else None
 
-    dataset = PartDataset(train_data,train_label)
+    dataset = PartDataset(train_data,train_label,rotation=ROTATION)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batchSize,
                                              shuffle=True, num_workers=int(args.workers))
 
@@ -83,7 +93,7 @@ def main(args):
     for epoch in range(args.epoch):
         for i, data in tqdm(enumerate(dataloader, 0),total=len(dataloader),smoothing=0.9):
             points, target = data
-            points, target = Variable(points), Variable(target.long())
+            points, target = Variable(points.float()), Variable(target.long())
             points = points.transpose(2, 1)
             points, target = points.cuda(), target.cuda()
             optimizer.zero_grad()
@@ -97,21 +107,21 @@ def main(args):
             optimizer.step()
         if COMPUTE_TRAIN_METRICS:
             train_metrics, train_hist_acc = test_seg(model, dataloader)
-            print('Epoch %d  %s loss: %f accuracy: %f' % (
-                epoch, blue('train'), history['loss'][-1], train_metrics))
-            logger.info('Epoch %d  %s loss: %f accuracy: %f' % (
-                epoch, 'train', history['loss'][-1], train_metrics))
+            print('Epoch %d  %s loss: %f accuracy: %f  meanIOU: %f' % (
+                epoch, 'train', history['loss'][-1], train_metrics['accuracy'],train_metrics['iou']))
+            logger.info('Epoch %d  %s loss: %f accuracy: %f  meanIOU: %f' % (
+                epoch, 'train', history['loss'][-1], train_metrics['accuracy'],train_metrics['iou']))
 
 
         test_metrics, test_hist_acc = test_seg(model, testdataloader)
 
-        print('Epoch %d  %s accuracy: %f' % (
-                 epoch, blue('test'), test_metrics))
-        logger.info('Epoch %d  %s accuracy: %f' % (
-                 epoch, 'test', test_metrics))
-        if test_metrics > best_acc:
-            best_acc = test_metrics
-            torch.save(model.state_dict(), '%s/seg_model_%d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
+        print('Epoch %d  %s accuracy: %f  meanIOU: %f' % (
+                 epoch, 'test', test_metrics['accuracy'],test_metrics['iou']))
+        logger.info('Epoch %d  %s accuracy: %f  meanIOU: %f' % (
+                 epoch, 'test', test_metrics['accuracy'],test_metrics['iou']))
+        if test_metrics['accuracy'] > best_acc:
+            best_acc = test_metrics['accuracy']
+            torch.save(model.state_dict(), '%s/seg_model_%.3d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
             logger.info('Save model..')
             print('Save model..')
 
