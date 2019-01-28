@@ -26,7 +26,7 @@ for cat in seg_classes.keys():
 
 def parse_args():
     parser = argparse.ArgumentParser('PointCapsNetSeg')
-    parser.add_argument('--batchSize', type=int, default=32, help='input batch size')
+    parser.add_argument('--batchSize', type=int, default=16, help='input batch size')
     parser.add_argument('--workers', type=int, default=4, help='number of data loading workers')
     parser.add_argument('--epoch', type=int, default=25, help='number of epochs to train for')
     parser.add_argument('--data_path', type=str, default='./data/shapenet16/', help='data path')
@@ -84,7 +84,14 @@ def main(args):
     if args.pretrain is not None:
         model.load_state_dict(torch.load(args.pretrain))
 
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    #optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = torch.optim.Adam(
+        model.parameters(),
+        lr=0.001,
+        betas=(0.9, 0.999),
+        eps=1e-08,
+        weight_decay=1e-4
+    )
     model.cuda()
     history = defaultdict(lambda: list())
     best_acc = 0
@@ -108,7 +115,7 @@ def main(args):
         if COMPUTE_TRAIN_METRICS:
             train_metrics, train_hist_acc = test_seg(model, dataloader)
             print('Epoch %d  %s loss: %f accuracy: %f  meanIOU: %f' % (
-                epoch, 'train', history['loss'][-1], train_metrics['accuracy'],train_metrics['iou']))
+                epoch, blue('train'), history['loss'][-1], train_metrics['accuracy'],train_metrics['iou']))
             logger.info('Epoch %d  %s loss: %f accuracy: %f  meanIOU: %f' % (
                 epoch, 'train', history['loss'][-1], train_metrics['accuracy'],train_metrics['iou']))
 
@@ -116,7 +123,7 @@ def main(args):
         test_metrics, test_hist_acc = test_seg(model, testdataloader)
 
         print('Epoch %d  %s accuracy: %f  meanIOU: %f' % (
-                 epoch, 'test', test_metrics['accuracy'],test_metrics['iou']))
+                 epoch, blue('test'), test_metrics['accuracy'],test_metrics['iou']))
         logger.info('Epoch %d  %s accuracy: %f  meanIOU: %f' % (
                  epoch, 'test', test_metrics['accuracy'],test_metrics['iou']))
         if test_metrics['accuracy'] > best_acc:
