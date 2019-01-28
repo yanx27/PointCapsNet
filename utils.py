@@ -55,10 +55,9 @@ def compute_iou(pred,target,dict=None): #TODO add category dictionary in future
         batch_target = target[j].cpu().data.numpy()
         batch_choice = batch_pred.data.max(1)[1].cpu().data.numpy()
         for cat in np.unique(batch_target):
-            intersection = len(batch_choice[(batch_choice==batch_target)&(batch_choice==cat)])
-            union = (len(batch_choice[batch_choice==cat])+len(batch_target[batch_target==cat])) - intersection
+            intersection = np.sum((batch_target == cat) & (batch_choice == cat))
+            union = float(np.sum((batch_target == cat) | (batch_choice == cat)))
             iou = intersection/union
-
             ious.append(iou)
     return np.mean(ious)
 
