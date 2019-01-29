@@ -33,7 +33,8 @@ def parse_args():
     parser.add_argument('--result_dir', type=str, default='./experiment/results/',help='dir to save pictures')
     parser.add_argument('--log_dir', type=str, default='./experiment/logs/',help='decay rate of learning rate')
     parser.add_argument('--pretrain', type=str, default=None,help='whether use pretrain model')
-    parser.add_argument('--train_metric', type=str, default=False, help='Whether evaluate on training data')
+    parser.add_argument('--train_metric', type=bool, default=False, help='Whether evaluate on training data')
+    parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--rotation',  default=None,help='range of training rotation')
     parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')
@@ -81,7 +82,8 @@ def main(args):
     num_classes = 50
     blue = lambda x: '\033[94m' + x + '\033[0m'
 
-    model = PointNetSeg(k=num_classes,n_routing=args.n_routing_iter)
+    USE_VOXEL_FEATURE = args.use_vox
+    model = PointNetSeg(k=num_classes,n_routing=args.n_routing_iter,use_vox_feature=USE_VOXEL_FEATURE)
     if args.pretrain is not None:
         model.load_state_dict(torch.load(args.pretrain))
         print('load model %s'%args.pretrain)
