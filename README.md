@@ -1,6 +1,6 @@
 # PointCapsNet验证点云的旋转不变性
 
-## 训练：
+## 分类任务训练：
 * 无数据增强训练
 `python train_clf.py --epoch 50` <br>
 * 在训练中加入旋转数据增强
@@ -13,7 +13,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 * 实验记录保存在`./experiment/logs/`
 * 实验结果图保存在`./experiment/results/`
 
-## 测试：
+## 分类任务测试：
 * 会自动选取`./experiment/checkpoints/`中正确率最高的模型进行测试
 * 无旋转测试
 `python evaluation.py` <br>
@@ -21,7 +21,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 `python evaluation.py --rotation xx,yy` <br>
 xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练数据随机旋转1~60度
 
-## 网络结构：
+## 分类任务网络结构：
 * 运行`python PointCapsNet.py` 
 
 ## 语义分割任务：
