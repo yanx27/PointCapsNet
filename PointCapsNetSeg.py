@@ -144,15 +144,18 @@ class CapsuleBlock(torch.nn.Module):
     def pcl2vox(self, pcl, pcl_feature, n=24):
         '''
         Generate mesh feature by point clouds feature
-        :param pcl: BxNx3 tensor original point clouds
+        :param pcl: BxPx3 tensor original point clouds （P is the number of point in each pointcloud）
         :param pcl_feature: BxNxC tensor feature of point clouds
         :param N: size of mesh
         :return: BxNxNxNxC tensor
         '''
         self.in_channels = pcl_feature.shape[2]
         mesh_feature = np.zeros((pcl_feature.size(0), n, n, n, self.in_channels))
+        vox2point_id = np.zeros((pcl_feature.size(0),pcl.size(1),pcl.size(2)))
+        pcl_feature = pcl_feature.cpu().data.numpy()
+        pcl = pcl.cpu().data.numpy()
         for i in range(len(mesh_feature)):
-            point = pd.DataFrame(pcl.cpu().data.numpy()[i], columns=['x', 'y', 'z'])
+            point = pd.DataFrame(pcl[i], columns=['x', 'y', 'z'])
             cloud = PyntCloud(point)
             voxelgrid_id = cloud.add_structure("voxelgrid", n_x=n, n_y=n, n_z=n)
             voxelgrid = cloud.structures[voxelgrid_id]
@@ -161,38 +164,38 @@ class CapsuleBlock(torch.nn.Module):
             z_vox = voxelgrid.voxel_z
             vox2point_npid = np.concatenate([x_vox.reshape((-1, 1)), y_vox.reshape((-1, 1)), z_vox.reshape((-1, 1))],
                                             axis=1)
-            for j in range(len(vox2point_npid)):
+            vox2point_id[i] = vox2point_npid
+            for j in range(vox2point_id.shape[1]):
                 x, y, z = vox2point_npid[j]
-                mesh_feature[i, x, y, z] += pcl_feature[i, j].cpu().data.numpy()
+                mesh_feature[i, x, y, z] += pcl_feature[i, j]
 
-        return Variable(torch.Tensor(mesh_feature)).cuda(), vox2point_npid
+        return Variable(torch.Tensor(mesh_feature)).cuda(), vox2point_id.astype(int)
 
     def vox2pcl(self, vox2point_idx, vox_feature):
-        pcl_feature = np.zeros((vox_feature.size(0), vox2point_idx.shape[0], vox_feature.size(1)))
-        for i in range(vox2point_idx.shape[0]):
-            x, y, z = vox2point_idx[i]
-            pcl_feature[:, i, :] = vox_feature[:, :, x, y, z].cpu().data.numpy()
-        return Variable(torch.Tensor(pcl_feature)).cuda()
+        '''
+        :param vox2point_idx: the corresponding relationship between voxel and pointcloud
+        :param vox_feature: BxNxNxNxC tensor
+        :return: BxPx3 tensor （P is the number of point in each pointcloud）
+        '''
+        pcl_feature = np.zeros((vox_feature.size(0), vox2point_idx.shape[1], vox_feature.size(1)))
+        vox_feature = vox_feature.cpu().data.numpy()
+        for idx in range(len(vox2point_idx)):
+            for i in range(vox2point_idx.shape[1]):
+                x, y, z = vox2point_idx[idx, i]
+                pcl_feature[idx, i, :] = vox_feature[idx, :, x, y, z]
+
+        return Variable (torch.Tensor(pcl_feature)).cuda()
 
     def forward(self, pcl,pcl_feature,n=24):
-        #print('pcl_feature', pcl_feature.shape)
         mesh_feature, vox2point_idx = self.pcl2vox(pcl,pcl_feature,n)
         mesh_feature  = mesh_feature.permute(0,4,1,2,3)
-        #print('mesh_feature',mesh_feature.shape)
         conv1 = self.conv_encoder(mesh_feature)
-        #print('conv1',conv1.shape)
         primary_capsules = self.primary_capsules(conv1)
-        #print('primary_capsules',primary_capsules.shape)
         digit_caps = self.routing(primary_capsules, self.n_routing_iter)
-        #print('digit_caps',digit_caps.shape)
         resize = digit_caps.view(digit_caps.size(0),digit_caps.size(1),4,4,4)
-        #print('resize',resize.shape)
         decoder = nn.ReLU()(self.decoder1(resize))
-        #print('decoder1', decoder.shape)
         decoder = nn.ReLU()(self.decoder2(decoder))
-        #print('decoder2', decoder.shape)
         out = self.vox2pcl(vox2point_idx,decoder)
-        #print('out', out.shape)
         return out
 
 if __name__ == '__main__':
