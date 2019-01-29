@@ -166,12 +166,13 @@ class CapsuleBlock(torch.nn.Module):
         return pcl2_feature
 
 class PointNetSeg(nn.Module):
-    def __init__(self, k = 2, n_routing=1):
+    def __init__(self, k = 2, n_routing=1, use_vox_feature = True):
         super(PointNetSeg, self).__init__()
         self.k = k
+        self.use_vox_feature = use_vox_feature
         self.CapsuleBlock = CapsuleBlock(n_routing_iter = n_routing).cuda()
         self.feat = PointNetEncoder(global_feat=False)
-        self.conv1 = torch.nn.Conv1d(1088+512, 512, 1)
+        self.conv1 = torch.nn.Conv1d(1088+512, 512, 1) if use_vox_feature else torch.nn.Conv1d(1088, 512, 1)
         self.conv2 = torch.nn.Conv1d(512, 256, 1)
         self.conv3 = torch.nn.Conv1d(256, 128, 1)
         self.conv4 = torch.nn.Conv1d(128, self.k, 1)
@@ -184,7 +185,10 @@ class PointNetSeg(nn.Module):
         batchsize = x.size()[0]
         n_pts = x.size()[2]
         x, trans, x_skip = self.feat(x)
-        caps_feature = self.CapsuleBlock(init_feature.permute(0,2,1), x_skip.permute(0,2,1))
+        if self.use_vox_feature:
+            caps_feature = self.CapsuleBlock(init_feature.permute(0, 2, 1), x_skip.permute(0, 2, 1))
+        else:
+            caps_feature = x
         #print('x:', x.shape)
         #print('caps_feature:', caps_feature.shape)
         x = torch.cat((x, caps_feature.permute(0,2,1)), 1)
