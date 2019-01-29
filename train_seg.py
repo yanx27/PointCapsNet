@@ -83,6 +83,13 @@ def main(args):
     model = PointNetSeg(k=num_classes)
     if args.pretrain is not None:
         model.load_state_dict(torch.load(args.pretrain))
+        print('load model %s'%args.pretrain)
+        logger.info('load model %s'%args.pretrain)
+    else:
+        print('Training from scratch')
+        logger.info('Training from scratch')
+    pretrain = args.pretrain
+    init_epoch = int(pretrain[-14:-11]) if args.pretrain is not None else 0
 
     #optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     optimizer = torch.optim.Adam(
@@ -97,7 +104,7 @@ def main(args):
     best_acc = 0
     COMPUTE_TRAIN_METRICS = args.train_metric
 
-    for epoch in range(args.epoch):
+    for epoch in range(init_epoch,args.epoch):
         for i, data in tqdm(enumerate(dataloader, 0),total=len(dataloader),smoothing=0.9):
             points, target = data
             points, target = Variable(points.float()), Variable(target.long())
@@ -128,7 +135,7 @@ def main(args):
                  epoch, 'test', test_metrics['accuracy'],test_metrics['iou']))
         if test_metrics['accuracy'] > best_acc:
             best_acc = test_metrics['accuracy']
-            torch.save(model.state_dict(), '%s/seg_model_%.3d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
+            torch.save(model.state_dict(), '%s/PointCapsSeg_%.3d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
             logger.info('Save model..')
             print('Save model..')
 
