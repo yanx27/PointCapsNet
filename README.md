@@ -28,9 +28,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 ## 分类任务网络结构：
 * 运行`python PointCapsNet.py` 
     
-## 分类任务参数：
-   ` 
-   
+## 分类任务参数： 
     parser.add_argument('--mesh_size', default=24,
                         help='点云转换成体素时候的尺寸，默认24x24x24')       
                         
