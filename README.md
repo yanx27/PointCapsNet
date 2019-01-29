@@ -29,7 +29,8 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 * 运行`python PointCapsNet.py` 
 
 ## 语义分割任务：
-* 运行`python train_seg.py --epoch 50 --n_routing_iter 3 --use_vox True` 
+* 运行`python train_seg.py --epoch 50 --n_routing_iter 3 --use_vox True` ，
+   如果不输入--use_vox True则为PointNet
 - 网络结构
     - [x] Pointnet做点云的特征提取
     - [x] CapsNet做体素的特征提取
