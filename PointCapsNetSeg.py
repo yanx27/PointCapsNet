@@ -6,7 +6,7 @@ from torch.autograd import Variable
 from pyntcloud import PyntCloud
 import torch.nn as nn
 import torch.nn.functional as F
-from PointCapsNet import  Conv3d_1, PrimaryCapsules, Routing, Norm, Decoder
+from PointCapsNetClf import  Conv3d_1, PrimaryCapsules, Routing, Norm, Decoder
 from DataLoader import load_h5
 
 class T_Net(nn.Module):
