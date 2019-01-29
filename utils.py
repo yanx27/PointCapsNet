@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from tqdm import tqdm
 from collections import defaultdict
 import datetime
-
+import torch.nn.functional as F
 
 def show_example(x, y, x_reconstruction, y_pred,save_dir, figname):
     x = x.squeeze().cpu().data.numpy()
@@ -46,7 +46,40 @@ def test(model, loader):
         metrics['accuracy'].append((acc).cpu().data.numpy())
     hist_acc.append(np.concatenate(metrics['accuracy']).mean())
     metrics['accuracy'] = np.concatenate(metrics['accuracy']).mean()
+    return metrics, hist_acc
 
+def compute_iou(pred,target,dict=None): #TODO add category dictionary in future
+    ious = []
+    for j in range(pred.size(0)):
+        batch_pred = pred[j]
+        batch_target = target[j].cpu().data.numpy()
+        batch_choice = batch_pred.data.max(1)[1].cpu().data.numpy()
+        for cat in np.unique(batch_target):
+            intersection = np.sum((batch_target == cat) & (batch_choice == cat))
+            union = float(np.sum((batch_target == cat) | (batch_choice == cat)))
+            iou = intersection/union
+            ious.append(iou)
+    return np.mean(ious)
+
+def test_seg(model, loader, num_classes = 50):
+    metrics = defaultdict(lambda:list())
+    hist_acc = []
+    for batch_id, (points, target) in tqdm(enumerate(loader), total=len(loader), smoothing=0.9):
+        batchsize, num_point, _ = points.size()
+        points, target = Variable(points.float()), Variable(target.long())
+        points = points.transpose(2, 1)
+        points, target = points.cuda(), target.cuda()
+        pred, _ = model(points)
+        mean_iou = compute_iou(pred,target)
+        pred = pred.view(-1, num_classes)
+        target = target.view(-1, 1)[:, 0]
+        pred_choice = pred.data.max(1)[1]
+        correct = pred_choice.eq(target.data).cpu().sum()
+        metrics['accuracy'].append(correct.item()/ (batchsize * num_point))
+        metrics['iou'].append(mean_iou)
+    hist_acc += metrics['accuracy']
+    metrics['accuracy'] = np.mean(metrics['accuracy'])
+    metrics['iou'] = np.mean(metrics['iou'])
 
     return metrics, hist_acc
 
@@ -82,7 +115,7 @@ def plot_acc_curve(total_train_acc,total_test_acc,save_dir):
     plt.savefig(save_dir +'/'+ str(datetime.datetime.now().strftime('%Y-%m-%d %H-%M'))+'_total_acc.png')
     plt.close()
 
-def show_point_cloud(tuple,seg_label=[]):
+def show_point_cloud(tuple,seg_label=[],title=None):
     import matplotlib.pyplot as plt
     if seg_label == []:
         x = [x[0] for x in tuple]
@@ -106,4 +139,5 @@ def show_point_cloud(tuple,seg_label=[]):
         ax.set_zlabel('Z')
         ax.set_ylabel('Y')
         ax.set_xlabel('X')
+    plt.title(title)
     plt.show()
