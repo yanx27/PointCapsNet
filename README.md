@@ -1,4 +1,4 @@
-# PointCapsNet验证点云的旋转不变性
+# PointCapsNet
 
 ## 分类任务训练：
 * 无数据增强训练
