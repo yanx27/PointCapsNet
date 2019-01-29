@@ -1,5 +1,9 @@
 # PointCapsNet
 
+## 环境
+* 安装[pyntcloud](https://github.com/daavoo/pyntcloud)
+* pytorch 0.4.1
+
 ## 分类任务训练：
 * 无数据增强训练
 `python train_clf.py --epoch 50` <br>
