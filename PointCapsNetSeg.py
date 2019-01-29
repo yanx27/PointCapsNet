@@ -166,7 +166,7 @@ class CapsuleBlock(torch.nn.Module):
         return pcl2_feature
 
 class PointNetSeg(nn.Module):
-    def __init__(self, use_vox_feature = False, k = 2, n_routing=1):
+    def __init__(self, k = 2, n_routing=1, use_vox_feature = True):
         super(PointNetSeg, self).__init__()
         self.k = k
         self.use_vox_feature = use_vox_feature
