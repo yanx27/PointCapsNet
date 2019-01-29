@@ -27,24 +27,8 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 
 ## 分类任务网络结构：
 * 运行`python PointCapsNet.py` 
-
-## 语义分割任务：
-* 运行`python train_seg.py --epoch 50 --n_routing_iter 3 --use_vox True` ，
-   如果不输入--use_vox True则为PointNet
-- 网络结构
-    - [x] Pointnet做点云的特征提取
-    - [x] CapsNet做体素的特征提取
-    - [ ] 超参数调试
-* 主要调试的超参数：
-
-   1.  n_routing_iter： 在训练时CapsNet动态路由的迭代次数<br>
-   2. 点云转体素前的特征维度 <br>
-   3. 体素转点云后的特征维度 <br>
-   4. 3D卷积和3D反卷积的卷积核尺寸、个数以及卷积层层数 <br>
-   5. 学习率和学习率衰减等常规超参数
- 
     
-## 其他参数：
+## 分类任务参数：
    ` 
    
     parser.add_argument('--mesh_size', default=24,
@@ -87,3 +71,33 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
                         
     parser.add_argument('--rotation',  default=None,
                         help='训练时旋转数据增强的角度范围')`
+                        
+## 语义分割任务：
+* 运行`python train_seg.py --epoch 50 --n_routing_iter 3 --use_vox True` ，
+   如果不输入--use_vox True则为PointNet
+- 网络结构
+    - [x] Pointnet做点云的特征提取
+    - [x] CapsNet做体素的特征提取
+    - [ ] 超参数调试
+* 主要调试的超参数：
+
+   1.  n_routing_iter： 在训练时CapsNet动态路由的迭代次数<br>
+   2. 点云转体素前的特征维度 <br>
+   3. 体素转点云后的特征维度 <br>
+   4. 3D卷积和3D反卷积的卷积核尺寸、个数以及卷积层层数 <br>
+   5. 学习率和学习率衰减等常规超参数
+
+## 分类任务参数：
+   ` 
+    parser.add_argument('--batchSize', type=int, default=16, help='input batch size')
+    parser.add_argument('--workers', type=int, default=4, help='number of data loading workers')
+    parser.add_argument('--epoch', type=int, default=25, help='number of epochs to train for')
+    parser.add_argument('--data_path', type=str, default='./data/shapenet16/', help='data path')
+    parser.add_argument('--result_dir', type=str, default='./experiment/results/',help='dir to save pictures')
+    parser.add_argument('--log_dir', type=str, default='./experiment/logs/',help='decay rate of learning rate')
+    parser.add_argument('--pretrain', type=str, default=None,help='whether use pretrain model')
+    parser.add_argument('--train_metric', type=bool, default=False, help='Whether evaluate on training data')
+    parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
+    parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
+    parser.add_argument('--rotation',  default=None,help='range of training rotation')
+    parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')
