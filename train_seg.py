@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument('--train_metric', type=str, default=False, help='Whether evaluate on training data')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--rotation',  default=None,help='range of training rotation')
+    parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')
 
     return parser.parse_args()
 
@@ -80,7 +81,7 @@ def main(args):
     num_classes = 50
     blue = lambda x: '\033[94m' + x + '\033[0m'
 
-    model = PointNetSeg(k=num_classes)
+    model = PointNetSeg(k=num_classes,n_routing=args.n_routing_iter)
     if args.pretrain is not None:
         model.load_state_dict(torch.load(args.pretrain))
         print('load model %s'%args.pretrain)

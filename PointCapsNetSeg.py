@@ -64,12 +64,13 @@ class PointNetEncoder(nn.Module):
         x = x.transpose(2,1)
         x = torch.bmm(x, trans) # batch matrix multiply
         x = x.transpose(2,1)
-        x_skip = self.conv1(x)
+        x = self.conv1(x)
         #print('x_skip',x_skip.shape)
-        x = F.relu(self.bn1(x_skip))
+        x = F.relu(self.bn1(x))
         pointfeat = x
         #print(pointfeat.size())
-        x = F.relu(self.bn2(self.conv2(x)))
+        x_skip = self.conv2(x)
+        x = F.relu(self.bn2(x_skip))
         x = self.bn3(self.conv3(x))
         x = torch.max(x, 2, keepdim=True)[0]
         x = x.view(-1, 1024)
@@ -79,40 +80,6 @@ class PointNetEncoder(nn.Module):
             x = x.view(-1, 1024, 1).repeat(1, 1, n_pts)
             return torch.cat([x, pointfeat], 1), trans, x_skip
 
-
-class PointNetSeg(nn.Module):
-    def __init__(self, k = 2):
-        super(PointNetSeg, self).__init__()
-        self.k = k
-        self.CapsuleBlock = CapsuleBlock().cuda()
-        self.feat = PointNetEncoder(global_feat=False)
-        self.conv1 = torch.nn.Conv1d(1088+512, 512, 1)
-        self.conv2 = torch.nn.Conv1d(512, 256, 1)
-        self.conv3 = torch.nn.Conv1d(256, 128, 1)
-        self.conv4 = torch.nn.Conv1d(128, self.k, 1)
-        self.bn1 = nn.BatchNorm1d(512)
-        self.bn2 = nn.BatchNorm1d(256)
-        self.bn3 = nn.BatchNorm1d(128)
-
-    def forward(self, x):
-        init_feature = x
-        batchsize = x.size()[0]
-        n_pts = x.size()[2]
-        x, trans, x_skip = self.feat(x)
-        caps_feature = self.CapsuleBlock(init_feature.permute(0,2,1), x_skip.permute(0,2,1))
-        #print('x:', x.shape)
-        #print('caps_feature:', caps_feature.shape)
-        x = torch.cat((x, caps_feature.permute(0,2,1)), 1)
-        #print('x:', x.shape)
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = self.conv4(x)
-        x = x.transpose(2,1).contiguous()
-        x = F.log_softmax(x.view(-1,self.k), dim=-1)
-        x = x.view(batchsize, n_pts, self.k)
-        return x, trans
-
 class CapsuleBlock(torch.nn.Module):
     '''
     Extract feature by capsnet
@@ -121,7 +88,7 @@ class CapsuleBlock(torch.nn.Module):
     '''
     def __init__(self, out_channels=256, kernel_size=5,num_class=50,n_routing_iter=1):
         super(CapsuleBlock, self).__init__()
-        self.in_channels = 64
+        self.in_channels = 128
         self.n_routing_iter = n_routing_iter
         self.conv_encoder = Conv3d_1(self.in_channels, out_channels, kernel_size)
         self.primary_capsules = PrimaryCapsules(
@@ -195,8 +162,42 @@ class CapsuleBlock(torch.nn.Module):
         resize = digit_caps.view(digit_caps.size(0),digit_caps.size(1),4,4,4)
         decoder = nn.ReLU()(self.decoder1(resize))
         decoder = nn.ReLU()(self.decoder2(decoder))
-        out = self.vox2pcl(vox2point_idx,decoder)
-        return out
+        pcl2_feature = self.vox2pcl(vox2point_idx,decoder)
+        return pcl2_feature
+
+class PointNetSeg(nn.Module):
+    def __init__(self, k = 2, n_routing=1):
+        super(PointNetSeg, self).__init__()
+        self.k = k
+        self.CapsuleBlock = CapsuleBlock(n_routing_iter = n_routing).cuda()
+        self.feat = PointNetEncoder(global_feat=False)
+        self.conv1 = torch.nn.Conv1d(1088+512, 512, 1)
+        self.conv2 = torch.nn.Conv1d(512, 256, 1)
+        self.conv3 = torch.nn.Conv1d(256, 128, 1)
+        self.conv4 = torch.nn.Conv1d(128, self.k, 1)
+        self.bn1 = nn.BatchNorm1d(512)
+        self.bn2 = nn.BatchNorm1d(256)
+        self.bn3 = nn.BatchNorm1d(128)
+
+    def forward(self, x):
+        init_feature = x
+        batchsize = x.size()[0]
+        n_pts = x.size()[2]
+        x, trans, x_skip = self.feat(x)
+        caps_feature = self.CapsuleBlock(init_feature.permute(0,2,1), x_skip.permute(0,2,1))
+        #print('x:', x.shape)
+        #print('caps_feature:', caps_feature.shape)
+        x = torch.cat((x, caps_feature.permute(0,2,1)), 1)
+        #print('x:', x.shape)
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.conv4(x)
+        x = x.transpose(2,1).contiguous()
+        x = F.log_softmax(x.view(-1,self.k), dim=-1)
+        x = x.view(batchsize, n_pts, self.k)
+        return x, trans
+
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
