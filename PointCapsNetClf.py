@@ -212,7 +212,7 @@ if __name__ == '__main__':
     print(y_pred.shape)
     print(x_reconstruction.shape)
     # Draw network structure
-    from torchviz import make_dot
-    draw = make_dot((y_pred, x_reconstruction), params=dict(model.named_parameters()))
-    draw.view()
+    #from torchviz import make_dot
+    #draw = make_dot((y_pred, x_reconstruction), params=dict(model.named_parameters()))
+    #draw.view()
 
