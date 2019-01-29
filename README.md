@@ -90,14 +90,25 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 ## 语义分割任务参数：
    ` 
     parser.add_argument('--batchSize', type=int, default=16, help='input batch size')
+    
     parser.add_argument('--workers', type=int, default=4, help='number of data loading workers')
+    
     parser.add_argument('--epoch', type=int, default=25, help='number of epochs to train for')
+    
     parser.add_argument('--data_path', type=str, default='./data/shapenet16/', help='data path')
+    
     parser.add_argument('--result_dir', type=str, default='./experiment/results/',help='dir to save pictures')
+    
     parser.add_argument('--log_dir', type=str, default='./experiment/logs/',help='decay rate of learning rate')
+    
     parser.add_argument('--pretrain', type=str, default=None,help='whether use pretrain model')
+    
     parser.add_argument('--train_metric', type=bool, default=False, help='Whether evaluate on training data')
+    
     parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
+    
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
+    
     parser.add_argument('--rotation',  default=None,help='range of training rotation')
-    parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')
+    
+    parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')`
