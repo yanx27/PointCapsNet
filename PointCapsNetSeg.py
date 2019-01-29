@@ -166,7 +166,7 @@ class CapsuleBlock(torch.nn.Module):
         return pcl2_feature
 
 class PointNetSeg(nn.Module):
-    def __init__(self, k = 2, n_routing=1, use_vox_feature = True):
+    def __init__(self, use_vox_feature = False, k = 2, n_routing=1):
         super(PointNetSeg, self).__init__()
         self.k = k
         self.use_vox_feature = use_vox_feature
@@ -180,19 +180,14 @@ class PointNetSeg(nn.Module):
         self.bn2 = nn.BatchNorm1d(256)
         self.bn3 = nn.BatchNorm1d(128)
 
-    def forward(self, x):
+    def forward(self, x, ):
         init_feature = x
         batchsize = x.size()[0]
         n_pts = x.size()[2]
         x, trans, x_skip = self.feat(x)
         if self.use_vox_feature:
             caps_feature = self.CapsuleBlock(init_feature.permute(0, 2, 1), x_skip.permute(0, 2, 1))
-        else:
-            caps_feature = x
-        #print('x:', x.shape)
-        #print('caps_feature:', caps_feature.shape)
-        x = torch.cat((x, caps_feature.permute(0,2,1)), 1)
-        #print('x:', x.shape)
+            x = torch.cat((x, caps_feature.permute(0, 2, 1)), 1)
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
