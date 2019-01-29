@@ -88,7 +88,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
    5. 学习率和学习率衰减等常规超参数
 
 ## 语义分割任务参数：
-   ` 
+    
     parser.add_argument('--batchSize', type=int, default=16, help='input batch size')
     
     parser.add_argument('--workers', type=int, default=4, help='number of data loading workers')
