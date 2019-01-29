@@ -1,7 +1,7 @@
 # PointCapsNet
 
 ## 环境
-* 安装[pyntcloud](https://github.com/daavoo/pyntcloud)
+* [pyntcloud](https://github.com/daavoo/pyntcloud)
 * pytorch 0.4.1
 
 ## 分类任务训练：
