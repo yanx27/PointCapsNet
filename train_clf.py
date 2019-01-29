@@ -4,7 +4,7 @@ import os
 from torch.autograd import Variable
 from tqdm import tqdm
 from collections import defaultdict
-from PointCapsNet import PointCapsNet
+from PointCapsNetClf import PointCapsNet
 from optimizer import PointCapsNetLoss,exponential_decay
 from DataLoader import load_data, myDataset
 from utils import test, save_checkpoint, plot_loss_curve, plot_acc_curve
