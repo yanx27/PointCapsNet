@@ -88,7 +88,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 ## 语义分割任务测试：
 * 运行例如`python evaluate_seg.py --experiment_path 2019-02-03_17-10 --use_vox True`
 * 会自动在`./experiment/2019-02-03_17-10/checkpoints/`里寻找最优的模型，测试结果保存在`./experiment/2019-02-03_17-10/logs/`
-* 会返回 mean accuracy、mean IOU以及每个类别的IOU，如： <br>
+* 返回mean accuracy, mean IOU以及每个类别的IOU，如： <br>
 ![](result.png)
 
 ## 语义分割任务参数：
