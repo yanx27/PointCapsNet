@@ -26,7 +26,7 @@ for cat in seg_classes.keys():
 
 def parse_args():
     parser = argparse.ArgumentParser('PointCapsNetSeg')
-    parser.add_argument('--batchSize', type=int, default=8, help='input batch size')
+    parser.add_argument('--batchSize', type=int, default=32, help='input batch size')
     parser.add_argument('--workers', type=int, default=4, help='number of data loading workers')
     parser.add_argument('--epoch', type=int, default=25, help='number of epochs to train for')
     parser.add_argument('--data_path', type=str, default='./data/shapenet16/', help='data path')
@@ -109,6 +109,7 @@ def main(args):
     model.cuda()
     history = defaultdict(lambda: list())
     best_acc = 0
+    best_meaniou = 0
     COMPUTE_TRAIN_METRICS = args.train_metric
 
     for epoch in range(init_epoch,args.epoch):
@@ -134,7 +135,7 @@ def main(args):
                 epoch, 'train', history['loss'][-1], train_metrics['accuracy'],train_metrics['iou']))
 
 
-        test_metrics, test_hist_acc = test_seg(model, testdataloader)
+        test_metrics, test_hist_acc, cat_mean_iou = test_seg(model, testdataloader, seg_label_to_cat)
 
         print('Epoch %d  %s accuracy: %f  meanIOU: %f' % (
                  epoch, blue('test'), test_metrics['accuracy'],test_metrics['iou']))
@@ -142,9 +143,17 @@ def main(args):
                  epoch, 'test', test_metrics['accuracy'],test_metrics['iou']))
         if test_metrics['accuracy'] > best_acc:
             best_acc = test_metrics['accuracy']
-            torch.save(model.state_dict(), '%s/PointCapsSeg4_%.3d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
+            torch.save(model.state_dict(), '%s/PointCapsSeg_%.3d_%.4f.pth' % (checkpoints_dir, epoch, best_acc))
+            logger.info(cat_mean_iou)
             logger.info('Save model..')
             print('Save model..')
+            print(cat_mean_iou)
+        if test_metrics['iou'] > best_meaniou:
+            best_meaniou = test_metrics['iou']
+        print('Best accuracy is: %.5f'%best_acc)
+        logger.info('Best accuracy is: %.5f'%best_acc)
+        print('Best meanIOU is: %.5f'%best_meaniou)
+        logger.info('Best meanIOU is: %.5f'%best_meaniou)
 
 
 if __name__ == '__main__':
