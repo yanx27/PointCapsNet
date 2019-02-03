@@ -86,7 +86,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
    4. 3D卷积和3D反卷积的卷积核尺寸、个数以及卷积层层数 <br>
    5. 学习率和学习率衰减等常规超参数
 ## 语义分割任务测试：
-* 运行例如`python evaluate_seg.py --experiment_path 2019-02-03_17-10 --use_vox True`
+* 运行例如`python evaluate_seg.py --experiment_path 2019-02-03_17-10 --use_vox True --rotation xx,yy`
 * 会自动在`./experiment/2019-02-03_17-10/checkpoints/`里寻找最优的模型，测试结果保存在`./experiment/2019-02-03_17-10/logs/`
 * 返回mean accuracy, mean IOU以及每个类别的IOU，如： <br>
 ![](result.png)
