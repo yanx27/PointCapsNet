@@ -1,4 +1,4 @@
-from PointCapsNet import PointCapsNet
+from PointCapsNetClf import PointCapsNet
 from DataLoader import load_data, myDataset
 from utils import test
 import argparse
