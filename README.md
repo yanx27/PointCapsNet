@@ -20,9 +20,9 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
 ## 分类任务测试：
 * 会自动选取`./experiment/checkpoints/`中正确率最高的模型进行测试
 * 无旋转测试
-`python evaluation.py` <br>
+`python evaluate_clf.py` <br>
 * 旋转测试
-`python evaluation.py --rotation xx,yy` <br>
+`python evaluate_clf.py --rotation xx,yy` <br>
 xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练数据随机旋转1~60度
 
 ## 分类任务网络结构：
@@ -70,9 +70,10 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
     parser.add_argument('--rotation',  default=None,
                         help='训练时旋转数据增强的角度范围')`
                         
-## 语义分割任务：
-* 运行`python train_seg.py --epoch 50 --n_routing_iter 3 --use_vox True` ，
+## 语义分割任务训练：
+* 运行`python train_seg.py --epoch 50 --n_routing_iter 3 --use_vox True --rotation xx,yy` ，
    如果不输入--use_vox True则为PointNet
+ * 模型的训练日志、.py文件和训练好的参数保存在当前的时间的文件夹，如`./experiment/2019-02-03_17-10/`
 - 网络结构
     - [x] Pointnet做点云的特征提取
     - [x] CapsNet做体素的特征提取
@@ -84,6 +85,11 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
    3. 体素转点云后的特征维度 <br>
    4. 3D卷积和3D反卷积的卷积核尺寸、个数以及卷积层层数 <br>
    5. 学习率和学习率衰减等常规超参数
+## 语义分割任务测试：
+* 运行例如`python evaluate_seg.py --experiment_path 2019-02-03_17-10 --use_vox True`
+* 会自动在`./experiment/2019-02-03_17-10/checkpoints/`里寻找最优的模型，测试结果保存在`./experiment/2019-02-03_17-10/logs/`
+* 会返回 mean accuracy、mean IOU以及每个类别的IOU，如： <br>
+![](pic.png)
 
 ## 语义分割任务参数：
     
