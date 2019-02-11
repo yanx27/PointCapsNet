@@ -26,14 +26,15 @@ for cat in seg_classes.keys():
 
 def parse_args():
     parser = argparse.ArgumentParser('PointCapsNetSeg')
-    parser.add_argument('--batchSize', type=int, default=32, help='input batch size')
+    parser.add_argument('--batchSize', type=int, default=12, help='input batch size')
     parser.add_argument('--workers', type=int, default=4, help='number of data loading workers')
-    parser.add_argument('--epoch', type=int, default=25, help='number of epochs to train for')
+    parser.add_argument('--epoch', type=int, default=25, help='number of epochs for training')
     parser.add_argument('--data_path', type=str, default='./data/shapenet16/', help='data path')
     parser.add_argument('--log_dir', type=str, default='logs/',help='decay rate of learning rate')
     parser.add_argument('--pretrain', type=str, default=None,help='whether use pretrain model')
     parser.add_argument('--train_metric', type=bool, default=False, help='Whether evaluate on training data')
     parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
+    parser.add_argument('--cnn_structure', type=str, default='UNet', help='fill [CapsNet] or [Unet] when use_vox is True')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--rotation',  default=None,help='range of training rotation')
     parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')
@@ -86,7 +87,11 @@ def main(args):
     model_module = importlib.import_module(args.model_name)
     shutil.copy('./%s.py'%model_module.__name__, str(file_dir))
 
-    model = model_module.PointNetSeg(k=num_classes,n_routing=args.n_routing_iter,use_vox_feature=USE_VOXEL_FEATURE)
+    model = model_module.PointNetSeg(k=num_classes,
+                                     n_routing=args.n_routing_iter,
+                                     use_vox_feature=USE_VOXEL_FEATURE,
+                                     cnn_structure = args.cnn_structure)
+
     # model = PointNetSeg(k=num_classes,n_routing=args.n_routing_iter,use_vox_feature=USE_VOXEL_FEATURE)
     if args.pretrain is not None:
         model.load_state_dict(torch.load(args.pretrain))
