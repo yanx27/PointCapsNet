@@ -177,10 +177,10 @@ class PointNetSeg(nn.Module):
         self.use_vox_feature = use_vox_feature
         self.cnn_structure = cnn_structure
         self.CapsuleBlock = CapsuleBlock(n_routing_iter = n_routing).cuda()
-        self.UNet = UNet3D(num_channels=128,residual='pool').cuda()
+        self.UNet = UNet3D(num_channels=128,output_channel = 512, residual='pool').cuda()
         self.feat = PointNetEncoder(global_feat=False)
         self.conv1 = torch.nn.Conv1d(1088+512, 1024, 1) if use_vox_feature else torch.nn.Conv1d(1088, 512, 1)
-        self.conv_unet = torch.nn.Conv1d(1088+128,1024,1)
+        self.conv_unet = torch.nn.Conv1d(1088+512,1024,1)
         self.conv2_1 = torch.nn.Conv1d(1024, 512, 1)
         self.conv2 = torch.nn.Conv1d(512, 256, 1)
         self.conv3 = torch.nn.Conv1d(256, 128, 1)
