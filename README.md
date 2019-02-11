@@ -86,7 +86,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
    4. 3D卷积和3D反卷积的卷积核尺寸、个数以及卷积层层数 <br>
    5. 学习率和学习率衰减等常规超参数
 ## 语义分割任务测试：
-* 运行例如`python evaluate_seg.py --experiment_path 2019-02-03_17-10 --use_vox True --rotation xx,yy`
+* 运行例如`python evaluate_seg.py --experiment_path 2019-02-03_17-10 --use_vox True --rotation xx,yy`。当`--use_vox True`的时候，可以选择`--cnn_structure UNet`或者`--cnn_structure CaspNet`，利用不同的CNN结构处理体素部分
 * 会自动在`./experiment/2019-02-03_17-10/checkpoints/`里寻找最优的模型，测试结果保存在`./experiment/2019-02-03_17-10/logs/`
 * 返回mean accuracy, mean IOU以及每个类别的IOU，如： <br>
 ![](result.png)
@@ -110,6 +110,8 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
     parser.add_argument('--train_metric', type=bool, default=False, help='Whether evaluate on training data')
     
     parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
+    
+    parser.add_argument('--cnn_structure', type=str, default='UNet', help='fill [CapsNet] or [Unet] when use_vox is True')
     
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     
