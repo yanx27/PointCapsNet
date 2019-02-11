@@ -68,7 +68,7 @@ class ChannelPool3d(AvgPool1d):
         return inp.view(n, c, d, w, h)
 
 class UNet3D(Module):
-    def __init__(self, num_channels=32, feat_channels=[64, 128, 256, 512, 1024], residual='conv'):
+    def __init__(self, num_channels=32, output_channel = 32, feat_channels=[64, 128, 256, 512, 1024], residual='conv'):
         # residual: conv for residual input x through 1*1 conv across every layer for downsampling, None for removal of residuals
 
         super(UNet3D, self).__init__()
@@ -99,7 +99,7 @@ class UNet3D(Module):
         self.deconv_blk1 = Deconv3D_Block(feat_channels[1], feat_channels[0])
 
         # Final 1*1 Conv Segmentation map
-        self.one_conv = Conv3d(feat_channels[0], num_channels, kernel_size=1, stride=1, padding=0, bias=True)
+        self.one_conv = Conv3d(feat_channels[0], output_channel, kernel_size=1, stride=1, padding=0, bias=True)
 
         # Activation function
         self.sigmoid = Sigmoid()
