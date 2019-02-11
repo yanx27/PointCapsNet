@@ -111,7 +111,7 @@ xx和yy均为两位数，是点云旋转角度的范围，如`01,60`是将训练
     
     parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
     
-    parser.add_argument('--cnn_structure', type=str, default='UNet', help='fill [CapsNet] or [Unet] when use_vox is True')
+    parser.add_argument('--cnn_structure', type=str, default='UNet', help='fill [CapsNet] or [UNet] when use_vox is True')
     
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     
