@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PointCapsNetClf import  Conv3d_1, PrimaryCapsules, Routing, Norm, Decoder
 from DataLoader import load_h5
+from voxel_cnn import UNet3D
 
 class T_Net(nn.Module):
     def __init__(self):
@@ -65,11 +66,12 @@ class PointNetEncoder(nn.Module):
         x = torch.bmm(x, trans) # batch matrix multiply
         x = x.transpose(2,1)
         x = self.conv1(x)
-        #print('x_skip',x_skip.shape)
+
         x = F.relu(self.bn1(x))
         pointfeat = x
-        #print(pointfeat.size())
+        # print(pointfeat.size())
         x_skip = self.conv2(x)
+
         x = F.relu(self.bn2(x_skip))
         x = self.bn3(self.conv3(x))
         x = torch.max(x, 2, keepdim=True)[0]
@@ -89,19 +91,22 @@ class CapsuleBlock(torch.nn.Module):
     def __init__(self, out_channels=256, kernel_size=5,num_class=50,n_routing_iter=1):
         super(CapsuleBlock, self).__init__()
         self.in_channels = 128
+        self.capsule1_dim = 16
+        self.capsule2_dim = 64
+        self.capsule1_outchannel = 64
         self.n_routing_iter = n_routing_iter
         self.conv_encoder = Conv3d_1(self.in_channels, out_channels, kernel_size)
         self.primary_capsules = PrimaryCapsules(
             input_shape=(256, 16, 16, 16),
-            capsule_dim=8,
-            out_channels=32,
+            capsule_dim=self.capsule1_dim,
+            out_channels=self.capsule1_outchannel,
             kernel_size=9,
             stride=2
         )
         self.routing = Routing(
-            caps_dim_before=8,
-            caps_dim_after=64,
-            n_capsules_before=4 * 4 * 4 * 32,
+            caps_dim_before=self.capsule1_dim,
+            caps_dim_after=self.capsule2_dim,
+            n_capsules_before=4 * 4 * 4 * self.capsule1_outchannel,
             n_capsules_after=num_class
         )
         self.norm = Norm()
@@ -166,17 +171,22 @@ class CapsuleBlock(torch.nn.Module):
         return pcl2_feature
 
 class PointNetSeg(nn.Module):
-    def __init__(self, k = 2, n_routing=1, use_vox_feature = True):
+    def __init__(self, k = 2, n_routing=1, use_vox_feature = True, cnn_structure = 'UNet'):
         super(PointNetSeg, self).__init__()
         self.k = k
         self.use_vox_feature = use_vox_feature
+        self.cnn_structure = cnn_structure
         self.CapsuleBlock = CapsuleBlock(n_routing_iter = n_routing).cuda()
+        self.UNet = UNet3D(num_channels=128,residual='pool').cuda()
         self.feat = PointNetEncoder(global_feat=False)
-        self.conv1 = torch.nn.Conv1d(1088+512, 512, 1) if use_vox_feature else torch.nn.Conv1d(1088, 512, 1)
+        self.conv1 = torch.nn.Conv1d(1088+512, 1024, 1) if use_vox_feature else torch.nn.Conv1d(1088, 512, 1)
+        self.conv_unet = torch.nn.Conv1d(1088+128,1024,1)
+        self.conv2_1 = torch.nn.Conv1d(1024, 512, 1)
         self.conv2 = torch.nn.Conv1d(512, 256, 1)
         self.conv3 = torch.nn.Conv1d(256, 128, 1)
         self.conv4 = torch.nn.Conv1d(128, self.k, 1)
         self.bn1 = nn.BatchNorm1d(512)
+        self.bn1_1 = nn.BatchNorm1d(1024)
         self.bn2 = nn.BatchNorm1d(256)
         self.bn3 = nn.BatchNorm1d(128)
 
@@ -185,10 +195,29 @@ class PointNetSeg(nn.Module):
         batchsize = x.size()[0]
         n_pts = x.size()[2]
         x, trans, x_skip = self.feat(x)
-        if self.use_vox_feature:
+        if self.use_vox_feature and self.cnn_structure == 'CapsNet':
             caps_feature = self.CapsuleBlock(init_feature.permute(0, 2, 1), x_skip.permute(0, 2, 1))
             x = torch.cat((x, caps_feature.permute(0, 2, 1)), 1)
-        x = F.relu(self.bn1(self.conv1(x)))
+            x = F.relu(self.bn1_1(self.conv1(x)))
+            x = F.relu(self.bn1(self.conv2_1(x)))
+        elif self.use_vox_feature and self.cnn_structure == 'UNet':
+            pcl_feature = x_skip.permute(0, 2, 1)
+            # print('pcl_feature',pcl_feature.size())
+            mesh_feature, vox2point_idx = self.UNet.pcl2vox(init_feature.permute(0, 2, 1), pcl_feature, n=32)
+            mesh_feature = mesh_feature.permute(0, 4, 1, 2, 3)
+            # print('mesh_feature',mesh_feature.size())
+            out = self.UNet(mesh_feature)
+            # print('out',out.size())
+            pcl2_feature = self.UNet.vox2pcl(vox2point_idx, out)
+            # print('pcl2_feature', pcl2_feature.size())
+            x = torch.cat((x, pcl2_feature.permute(0, 2, 1)), 1)
+            # print('x', x.size())
+            x = F.relu(self.bn1_1(self.conv_unet(x)))
+            x = F.relu(self.bn1(self.conv2_1(x)))
+            # print('x', x.size())
+
+        else:
+            x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
         x = self.conv4(x)
@@ -225,8 +254,8 @@ if __name__ == '__main__':
     pcl_feature = Variable(torch.rand(32, 2048, 64)).cuda()
     pcl = Variable(torch.Tensor(data[0:36])).cuda()
 
-    caps = CapsuleBlock().cuda()
-    print('pcl',pcl.shape)
-    print('pcl_feature',pcl_feature.shape)
-    out = caps(pcl, pcl_feature, 24)
+    # caps = CapsuleBlock().cuda()
+    # print('pcl',pcl.shape)
+    # print('pcl_feature',pcl_feature.shape)
+    # out = caps(pcl, pcl_feature, 24)
 
