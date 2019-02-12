@@ -32,6 +32,8 @@ def parse_args():
     parser.add_argument('--epoch', type=int, default=25, help='number of epochs to train for')
     parser.add_argument('--data_path', type=str, default='./data/shapenet16/', help='data path')
     parser.add_argument('--experiment_path', type=str, default='', help='experiment path')
+    parser.add_argument('--cnn_structure', type=str, default='UNet',
+                        help='fill [CapsNet] or [UNet] when use_vox is True')
     parser.add_argument('--use_vox', type=bool, default=False, help='Whether use capsnet extract voxel feature or not')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--rotation',  default=None,help='range of training rotation')
@@ -64,9 +66,12 @@ def main(args):
     logger.info('PARAMETER ...')
     logger.info(args)
     DATA_PATH = args.data_path
-    _, _, test_data, test_label = load_segdata(DATA_PATH)
+    train_data, train_label, test_data, test_label = load_segdata(DATA_PATH)
     logger.info("The number of test data is: %d", test_data.shape[0])
     ROTATION = (int(args.rotation[0:2]), int(args.rotation[3:5])) if args.rotation is not None else None
+    train_dataset = PartDataset(train_data,train_label,ROTATION)
+    traindataloader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batchSize,
+                                                 shuffle=True, num_workers=int(args.workers))
     test_dataset = PartDataset(test_data,test_label,ROTATION)
     testdataloader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batchSize,
                                                  shuffle=True, num_workers=int(args.workers))
@@ -75,7 +80,10 @@ def main(args):
 
     USE_VOXEL_FEATURE = args.use_vox
     model_module = importlib.import_module(model_name)
-    model = model_module.PointNetSeg(k=num_classes, n_routing=args.n_routing_iter, use_vox_feature=USE_VOXEL_FEATURE)
+    model = model_module.PointNetSeg(k=num_classes,
+                                     n_routing=args.n_routing_iter,
+                                     use_vox_feature=USE_VOXEL_FEATURE,
+                                     cnn_structure = args.cnn_structure)
     model.cuda()
     checkpoint_dir = experiment_dir + '/checkpoints'
     model_list = os.listdir(checkpoint_dir)
@@ -85,11 +93,18 @@ def main(args):
     score = np.array(score)
     best_checkpoints = model_list[np.argmax(score)]
     pretrain = checkpoint_dir + '/' + best_checkpoints
+    print('load model %s' % pretrain)
     model.load_state_dict(torch.load(pretrain))
 
-    print('load model %s' % pretrain)
     logger.info('load model %s' % pretrain)
 
+    train_metrics, train_hist_acc, cat_mean_iou = test_seg(model, traindataloader, seg_label_to_cat)
+
+    print('%s accuracy: %f  meanIOU: %f' % (blue('train'), train_metrics['accuracy'], train_metrics['iou']))
+    logger.info('%s accuracy: %f  meanIOU: %f' % ('train', train_metrics['accuracy'], train_metrics['iou']))
+    logger.info(cat_mean_iou)
+    print(cat_mean_iou)
+    
     test_metrics, test_hist_acc, cat_mean_iou = test_seg(model, testdataloader, seg_label_to_cat)
 
     print('%s accuracy: %f  meanIOU: %f' % (blue('test'), test_metrics['accuracy'], test_metrics['iou']))
