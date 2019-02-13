@@ -39,6 +39,8 @@ def parse_args():
     parser.add_argument('--rotation',  default=None,help='range of training rotation')
     parser.add_argument('--n_routing_iter', type=int, default=1, help='Number if rounting iteration')
     parser.add_argument('--model_name', type=str, default='PointCapsNetSeg', help='Name of model')
+    parser.add_argument('--learning_rate', type=float, default=5e-4, help='learning rate for training')
+    parser.add_argument('--decay_rate', type=float, default=1e-4, help='weight decay')
 
     return parser.parse_args()
 
@@ -106,10 +108,10 @@ def main(args):
     #optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=5e-4,
+        lr=args.learning_rate,
         betas=(0.9, 0.999),
         eps=1e-08,
-        weight_decay=1e-4
+        weight_decay=args.decay_rate
     )
     model.cuda()
     history = defaultdict(lambda: list())
