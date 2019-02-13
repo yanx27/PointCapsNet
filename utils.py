@@ -7,6 +7,7 @@ from torch.autograd import Variable
 from tqdm import tqdm
 from collections import defaultdict
 import datetime
+import pandas as pd
 import torch.nn.functional as F
 
 def show_example(x, y, x_reconstruction, y_pred,save_dir, figname):
@@ -48,20 +49,27 @@ def test(model, loader):
     metrics['accuracy'] = np.concatenate(metrics['accuracy']).mean()
     return metrics, hist_acc
 
-def compute_iou(pred,target,dict=None): #TODO add category dictionary in future
+def compute_iou(pred,target,iou_tabel=None):
+
+
     ious = []
+    target = target.cpu().data.numpy()
     for j in range(pred.size(0)):
         batch_pred = pred[j]
-        batch_target = target[j].cpu().data.numpy()
+        batch_target = target[j]
         batch_choice = batch_pred.data.max(1)[1].cpu().data.numpy()
         for cat in np.unique(batch_target):
             intersection = np.sum((batch_target == cat) & (batch_choice == cat))
             union = float(np.sum((batch_target == cat) | (batch_choice == cat)))
             iou = intersection/union
             ious.append(iou)
-    return np.mean(ious)
+            iou_tabel[cat,0] += iou
+            iou_tabel[cat,1] += 1
+    return np.mean(ious), iou_tabel
 
-def test_seg(model, loader, num_classes = 50):
+def test_seg(model, loader, catdict, num_classes = 50):
+    ''' catdict = {0:Airplane, 1:Airplane, ...49:Table} '''
+    iou_tabel = np.zeros((len(catdict),3))
     metrics = defaultdict(lambda:list())
     hist_acc = []
     for batch_id, (points, target) in tqdm(enumerate(loader), total=len(loader), smoothing=0.9):
@@ -70,18 +78,22 @@ def test_seg(model, loader, num_classes = 50):
         points = points.transpose(2, 1)
         points, target = points.cuda(), target.cuda()
         pred, _ = model(points)
-        mean_iou = compute_iou(pred,target)
+        mean_iou, iou_tabel = compute_iou(pred,target,iou_tabel)
         pred = pred.view(-1, num_classes)
         target = target.view(-1, 1)[:, 0]
         pred_choice = pred.data.max(1)[1]
         correct = pred_choice.eq(target.data).cpu().sum()
         metrics['accuracy'].append(correct.item()/ (batchsize * num_point))
         metrics['iou'].append(mean_iou)
+    iou_tabel[:,2] = iou_tabel[:,0] /iou_tabel[:,1]
     hist_acc += metrics['accuracy']
     metrics['accuracy'] = np.mean(metrics['accuracy'])
     metrics['iou'] = np.mean(metrics['iou'])
+    iou_tabel = pd.DataFrame(iou_tabel,columns=['iou','count','mean_iou'])
+    iou_tabel['Category_IOU'] = [cat_value for cat_value in catdict.values()]
+    cat_iou = iou_tabel.groupby('Category_IOU')['mean_iou'].mean()
 
-    return metrics, hist_acc
+    return metrics, hist_acc, cat_iou
 
 def compute_avg_curve(y, n_points_avg):
     avg_kernel = np.ones((n_points_avg,)) / n_points_avg
