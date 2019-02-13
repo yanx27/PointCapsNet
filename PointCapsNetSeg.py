@@ -116,7 +116,7 @@ class CapsuleBlock(torch.nn.Module):
     def pcl2vox(self, pcl, pcl_feature, n=24):
         '''
         Generate mesh feature by point clouds feature
-        :param pcl: BxPx3 tensor original point clouds （P is the number of point in each pointcloud）
+        :param pcl: BxPx3 tensor original point clouds (P is the number of point in each pointcloud)
         :param pcl_feature: BxNxC tensor feature of point clouds
         :param N: size of mesh
         :return: BxNxNxNxC tensor
@@ -147,7 +147,7 @@ class CapsuleBlock(torch.nn.Module):
         '''
         :param vox2point_idx: the corresponding relationship between voxel and pointcloud
         :param vox_feature: BxNxNxNxC tensor
-        :return: BxPx3 tensor （P is the number of point in each pointcloud）
+        :return: BxPx3 tensor (P is the number of point in each pointcloud)
         '''
         pcl_feature = np.zeros((vox_feature.size(0), vox2point_idx.shape[1], vox_feature.size(1)))
         vox_feature = vox_feature.cpu().data.numpy()
